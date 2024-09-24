@@ -1,0 +1,35 @@
+{% extends "auctions/layout.html" %}
+{% load static %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2>Your Watchlist</h2>
+    <div class="row">
+        {% if watchlist_items %}
+            {% for listing in watchlist_items %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                            {% if listing.image_url %}
+                                <img src="{{ listing.image_url }}" class="card-img-top">
+                            {% else %}
+                                <img src="{% static 'auctions/default_image.png' %}" class="card-img-top">
+                            {% endif %}
+                            <div class="card-body d-flex flex-column justify-content-between">
+                                <h5 class="card-title">{{ listing.title }}</h5>
+                                <div class="mt-3 d-grid gap-2">
+                                    <a href="{% url 'listing' listing.id %}" class="btn btn-primary btn-block">View Listing</a>
+                                    <form action="{% url 'toggle_watchlist' listing.id %}" method="POST" class="mb-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-secondary btn-block">Remove from Watchlist</button>
+                                    </form>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>You have no items in your watchlist.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

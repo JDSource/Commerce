@@ -1,0 +1,105 @@
+{% extends "auctions/layout.html" %}
+{% load static %}
+
+{% block body %}
+<div class="container mt-4">
+
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+            <p class="{{ message.tags }}">{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+   
+    <h2 class="mb-4">{{ listing.title }}</h2>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            {% if listing.image_url %}
+                <img src="{{ listing.image_url }}" class="img-fluid mb-3" style="max-width: 100%; height: auto;">
+            {% else %}
+                <img src="{% static 'auctions/default_image.png' %}" class="img-fluid mb-3" style="max-width: 100%; height:auto;">
+            {% endif %}    
+        </div>
+        <div class="col-md-6">
+            <p><strong>Description: </strong>{{ listing.description }}</p>
+            <p><strong>Category: </strong>{{ listing.category }}</p>
+            <p><strong>Starting Bid: </strong>${{ listing.startingbid }}</p>
+            <p><strong>Current Bid: </strong>${{ listing.currentbid|default:"0" }}</p>
+            <p><strong>Listed By: </strong>{{ listing.owner.username }}</p>
+
+            {% if user.is_authenticated %}
+                {% if user == listing.owner and listing.is_active %}
+                    <form action="{% url 'close_auction' listing.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" style="margin-top: 5px;">Close Auction</button>
+                    </form>
+                {% elif user == listing.winner %}
+                    <p class="alert alert-success">Congratulations! You won this auction!</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h3>Current Bids</h3>
+        <ul>
+            {% for bid in bids %}
+                <li>Bid Amount: ${{ bid.bid_amount }} - Bidder: {{ bid.bidder.username }}</li>
+            {% empty %}
+                <li>No bids yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if user.is_authenticated %}
+        <form action="{% url 'toggle_watchlist' listing.id %}" method="post">
+            {% csrf_token %}
+            {% if listing in user.watchlist.all %}    
+                <button type="submit" class="btn btn-danger">Remove from Watchlist</button>
+            {% else %}
+                <button type="submit" class="btn btn-primary">Add to Watchlist</button>
+            {% endif %}
+        </form>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+        <div class="mt-4">
+            <h3>Place a Bid</h3>
+            <form action="{% url 'listing' listing.id %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ bid_form.bid_amount }}
+                </div>
+                <button type="submit" class="btn btn-primary">Confirm</button>
+             </form>
+        </div>
+    {% else %}
+        <p class="mt-4 text-center"> You must be logged in to place a bid.</p>
+    {% endif %}
+    
+    <div class="mt-4">
+        <h3>Comments</h3>
+        <ul class="list-unstyled">
+            {% for comment in comments %}
+                <li><strong>{{ comment.commenter.username }}: </strong>{{ comment.comment_text }} <small class="text-muted" style="font-size: 0.85em;">- {{ comment.timestamp }}</small>
+                </li>
+            {% empty %}
+                <li>No comments yet.</li>
+            {% endfor %}
+        </ul>
+
+        {% if user.is_authenticated %}
+            <form action="{% url 'listing' listing.id %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                {{ comment_form.comment_text }}
+                </div>
+                <button type="submit" class="btn btn-primary mt-2" style="margin-right: 10px;">Post Comment</button>
+            </form>
+        {% else %}
+            <p class="text-center">You must be logged in to comment.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
